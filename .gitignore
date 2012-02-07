@@ -1,0 +1,7 @@
+MANIFEST
+MANIFEST.SKIP
+META.yml
+*.tar.gz
+Build
+_build/
+blib/

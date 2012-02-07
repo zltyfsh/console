@@ -1,0 +1,158 @@
+#!/usr/bin/perl
+
+our $VERSION = '1.0.4';
+
+use strict;
+use warnings;
+use Net::DNS;
+use File::Basename;
+use IO::Prompt;
+use Pod::Usage;
+use Getopt::Std;
+
+our ($opt_h, $opt_m);
+getopts('hm') or pod2usage(2);
+pod2usage(1) if $opt_h;
+pod2usage(-verbose => 2) if $opt_m;
+pod2usage(2) unless @ARGV;
+
+my $host = shift @ARGV;
+
+my @list; # array of hash of console servers, port, description
+
+my $resolver = Net::DNS::Resolver->new;
+my $query = $resolver->search($host, "TXT");
+if ($query) {
+  foreach my $rr (grep { $_->type eq 'TXT' } $query->answer) {
+    if ($rr->rdatastr =~ m! OOB : ([^,]+) , ([^,]+) (?:, (.*) )* " $!xms) {
+      my $descr = $3 || "n/a";
+      push(@list, { server => $1, port => $2, descr => $descr });
+    }
+  }
+} else {
+  die "Cannot find host \"$host\" in DNS.\n";
+}
+
+# sort @list based on description
+@list = sort { $a->{descr} cmp $b->{descr} } @list;
+
+my $selected = 0;
+
+# single hit or several?
+if (scalar @list > 1) {
+  print "Host $host have more than one console port:\n";
+  my $maxnum = $#list;
+  foreach my $i (0..$maxnum) {
+    printf "%-10s [%d]\n", $list[$i]{descr}, $i;
+  }
+  $selected = prompt "Enter your choice [0-$maxnum]: ",
+     -one_char, -integer, -require => {
+     "Valid range is 0 to $maxnum: " => sub { $_>= 0 && $_ <= $maxnum }
+  };
+}
+
+# ok, it's time to kill our self by firing of an telnet session
+my $cmd = sprintf "telnet %s %d", 
+  $list[$selected]{server},
+  $list[$selected]{port};
+
+exec($cmd);
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+console - Connect to a remote host through a console server
+
+=head1 SYNOPSIS
+
+console [options] [hostname]
+
+ Options:
+   -h      Brief help documentation
+   -m      Full documentation
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-h>
+
+Print a brief help message and exits.
+
+=item B<-m>
+
+Print full documentation and exits.
+
+=item B<hostname>
+
+The remote host to connect to.
+
+=back
+
+=head1 DESCRIPTION
+
+B<console> is a tool to handle remote out of bound (OOB)
+connections to hosts through console servers easy. 
+A console server usually have
+a number of devices connected to it on different serial lines.
+The line to connect to is selected by doing telnet to a specific
+TCP port number on the console server. 
+
+Unless some sort of mapping
+between serial lines (TCP ports) and the hostname of device 
+connected to the port exist, it's almost impossible to use
+such arrangement.
+
+Instead of maintaining a dedicated mapping table, B<console>
+uses DNS TXT RR's as source of information. If the hostnames
+of the devices are maintained in DNS, it's very easy to add
+one extra RR for the host. Other positive side effects of 
+using DNS instead of a separate mapping is the standarized
+acces protocol, and the universal access to the info from any
+host.
+
+The DNS TXT RR must follow a simple and quite self explaning 
+format:
+
+ <hostname> TXT "OOB:<console server>,<TCP port>[,<description>]"
+
+The part that need an explanation is the optional <description>.
+If there is a device connected to console server(s) through more
+than one serial line the <description> is used to differ them. 
+In those cases B<console> will display a menu with the <description>'s
+and allows the user to select which port to connect to.
+
+B<Examples:>
+
+=over 4
+
+=item A device with a single OOB serial line
+
+ switch A    10.1.1.1
+        TXT  "OOB:172.16.1.1,2001"
+
+=item A device with two OOB serial lines
+
+ router A    10.2.1.1
+        TXT  "OOB:cs1,2002,Slot 1"
+        TXT  "OOB:cs1,2003,Slot 2"
+
+=back
+
+=head1 AUTHOR
+
+Per Carlson C<< <per.carlson@hemmop.com> >>
+
+=head1 COPYRIGHT
+
+Copyright (C) 2012 Per Carlson. All rights reserved.
+
+=head1 LICENSE
+
+This application is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

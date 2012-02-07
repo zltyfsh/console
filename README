@@ -1,0 +1,32 @@
+"console" is an application for accessing remote devices
+out of band (OOB) through Reverse Telnet type of console
+servers.
+
+The actual mapping from hostnames to console server and
+port is stored as an TXT RR in DNS for all hosts. Cases
+where a device have more than one OOB connection are also
+supported.
+
+A typical DNS entry for a device looks like:
+
+router	  A    10.1.1.1
+	  AAAA 2001:db8::10:1:1:1
+	  TXT "OOB:consoleserver1,2001"
+
+
+The console server tested is Cisco 2511 running IOS 12.0(28c)
+with the following configuration:
+
+aaa new-model
+aaa authentication login line_auth none
+!
+line 1 16
+ session-timeout 60 
+ no exec
+ absolute-timeout 180
+ login authentication line_auth
+ transport input telnet
+!
+end
+
+
