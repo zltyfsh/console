@@ -3,7 +3,7 @@ use Module::Build;
 my $build = Module::Build->new
 (
  dist_name => 'console',
- dist_author => 'Per Carlson <pelle@hemmop.com>'
+ dist_author => 'Per Carlson <pelle@hemmop.com>', 
  dist_version_from => 'console',
  dist_abstract => "Script for OOB console access using DNS as source of info",
  script_files => 'console',

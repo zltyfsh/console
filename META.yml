@@ -1,0 +1,20 @@
+---
+abstract: 'Script for OOB console access using DNS as source of info'
+author:
+  - 'Per Carlson <pelle@hemmop.com>'
+build_requires: {}
+configure_requires:
+  Module::Build: 0.38
+dynamic_config: 1
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.110440'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: console
+requires:
+  IO::Prompt: 0
+  Net::DNS: 0
+resources:
+  license: http://dev.perl.org/licenses/
+version: v1.0.6

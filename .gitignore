@@ -1,6 +1,5 @@
 MANIFEST
-MANIFEST.SKIP
-META.yml
+MYMETA.*
 *.tar.gz
 Build
 _build/
