@@ -1,0 +1,38 @@
+Source: console
+Section: net
+Priority: optional
+Maintainer: Per Carlson <pelle@hemmop.com>
+Build-Depends: debhelper (>= 7.0.50),
+ perl
+Build-Depends-Indep: libio-prompt-perl,
+ libnet-dns-perl,
+ perl-modules (>= 0.340201)
+Standards-Version: 3.9.3
+Vcs-Browser: https://github.com/hemmop/console.git
+
+Package: oob-console
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ libio-prompt-perl,
+ libnet-dns-perl
+Conflicts: conserver-client
+Description: Connect to a remote host through a console server
+ oob-console is a tool to handle remote out of bound (OOB)
+ connections to hosts through console servers easy.
+ A console server usually have a number of devices connected to it
+ on different serial lines. The line to connect to is selected by
+ doing telnet to a specific
+ TCP port number on the console server.
+ .
+ Unless some sort of mapping
+ between serial lines (TCP ports) and the hostname of device
+ connected to the port exist,  it's almost impossible to use
+ such arrangement.
+ .
+ Instead of maintaining a dedicated mapping table, console
+ uses DNS TXT RR's as source of information. If the hostnames
+ of the devices are maintained in DNS, it's very easy to add
+ one extra RR for the host. Other positive side effects of
+ using DNS instead of a separate mapping is the standarized
+ acces protocol,  and the universal access to the info from any
+ host.
