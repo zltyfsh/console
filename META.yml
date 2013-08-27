@@ -17,4 +17,4 @@ requires:
   Net::DNS: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: v1.0.6
+version: 1.01

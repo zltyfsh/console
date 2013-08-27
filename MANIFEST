@@ -1,0 +1,7 @@
+Build.PL
+console
+MANIFEST			This list of files
+MANIFEST.SKIP
+META.json
+META.yml
+README

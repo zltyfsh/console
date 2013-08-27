@@ -46,4 +46,4 @@
 \bbuild.com$
 
 # Avoid archives of this distribution
-\bconsole-v[\d\.\_]+
+\bconsole-.*.tar.gz

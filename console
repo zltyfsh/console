@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-our $VERSION = '1.0.6';
-
 use strict;
 use warnings;
 use Net::DNS;
@@ -9,6 +7,9 @@ use File::Basename;
 use IO::Prompt;
 use Pod::Usage;
 use Getopt::Std;
+
+our $VERSION = '1.01';
+$VERSIOn = eval $VERSION;
 
 our ($opt_h, $opt_m);
 getopts('hm') or pod2usage(2);
@@ -20,18 +21,21 @@ my $host = shift @ARGV;
 
 my @list; # array of hash of console servers, port, description
 
-my $resolver = Net::DNS::Resolver->new;
-my $query = $resolver->search($host, "TXT");
-if ($query) {
-  foreach my $rr (grep { $_->type eq 'TXT' } $query->answer) {
-    if ($rr->rdatastr =~ m! OOB : ([^,]+) , ([^,]+) (?:, (.*) )* " $!xms) {
-      my $descr = $3 || "n/a";
-      push(@list, { server => $1, port => $2, descr => $descr });
-    }
+my $resolver = Net::DNS::Resolver->new(dnsrch => 1);
+my $query = $resolver->search($host, 'TXT');
+
+die qq{Cannot find '$host' in DNS\n}
+  unless $query;
+
+foreach my $rr ($query->answer) {
+  next unless $rr->type eq 'TXT';
+  if ($rr->txtdata =~ m! OOB : ([^,]+) , ([^,]+) (?:, (.*) )? !xms) {
+    push(@list, { server => $1, port => $2, descr => $3 // 'n/a' });
   }
-} else {
-  die "Cannot find host \"$host\" in DNS.\n";
 }
+
+die qq{Didn't find any TXT OOB record in DNS for '$host'\n}
+  unless @list;
 
 # sort @list based on description
 @list = sort { $a->{descr} cmp $b->{descr} } @list;
@@ -40,26 +44,20 @@ my $selected = 0;
 
 # single hit or several?
 if (scalar @list > 1) {
-  print "Host $host have more than one console port:\n";
+  print qq{Host '$host' have more than one console port:\n};
   my $maxnum = $#list;
   foreach my $i (0..$maxnum) {
-    printf "%-10s [%d]\n", $list[$i]{descr}, $i;
+    printf qq{%-10s [%d]\n}, $list[$i]{descr}, $i;
   }
-  $selected = prompt "Enter your choice [0-$maxnum]: ",
+  $selected = prompt qq{Enter your choice [0-$maxnum]: },
      -one_char, -integer, -require => {
-     "Valid range is 0 to $maxnum: " => sub { $_>= 0 && $_ <= $maxnum }
+       qq{Valid range is 0 to $maxnum: } => sub { $_>= 0 && $_ <= $maxnum }
   };
 }
 
 # ok, it's time to kill our self by firing of an telnet session
-my $cmd = sprintf "telnet %s %d", 
-  $list[$selected]{server},
-  $list[$selected]{port};
-
-print "Connecting to ", $list[$selected]{server}, 
-    ", port ", $list[$selected]{port}, ".\n";
-
-exec($cmd);
+print qq{Connecting to $list[$selected]{server} port $list[$selected]{port}.\n};
+exec "telnet $list[$selected]{server} $list[$selected]{port}";
 
 __DATA__
 
@@ -151,7 +149,7 @@ Per Carlson C<< <per.carlson@hemmop.com> >>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2012 Per Carlson. All rights reserved.
+Copyright (C) 2012,1013 Per Carlson
 
 =head1 LICENSE
 
